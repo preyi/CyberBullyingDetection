@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comment Classification</title>
+    <style>
+        /* General body styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: black; /* Black background for the whole page */
+            color: white; /* White text color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Header Styling */
+        h1 {
+            text-align: center;
+            color: #00ff00; /* Light green color for the heading */
+            font-size: 36px;
+            margin-bottom: 30px;
+        }
+
+        /* Container to hold form and result */
+        .container {
+            text-align: center;
+            width: 60%;
+            background-color: rgba(0, 0, 0, 0.7); /* Slight transparency for background */
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 255, 0, 0.4);
+        }
+
+        /* Form styling */
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            width: 60%;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #00ff00;
+            border: none;
+            border-radius: 5px;
+            color: black;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #007f00; /* Darker green on hover */
+        }
+
+        /* Result container styling */
+        #result-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .result {
+            font-size: 20px;
+        }
+
+        .result.red {
+            color: #ff0000; /* Red for Cyberbullying */
+        }
+
+        .result.green {
+            color: #00ff00; /* Green for Not Cyberbullying */
+        }
+
+        /* Error Message Styling */
+        .error {
+            color: red;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Comment Classification</h1>
+        <form id="classify-form">
+            <label for="comment">Enter a Comment:</label>
+            <input type="text" id="comment" name="comment" required>
+            <button type="submit">Classify</button>
+        </form>
+
+        <div id="result-container">
+            <h2>Result:</h2>
+            <p class="result" id="classification"></p>
+        </div>
+
+        <p id="error-message" class="error"></p>
+    </div>
+
+    <script>
+        document.getElementById("classify-form").addEventListener("submit", function (e) {
+            e.preventDefault(); // Prevent the form from submitting normally
+
+            const comment = document.getElementById("comment").value;
+
+            // Clear any previous error messages
+            document.getElementById("error-message").innerText = "";
+
+            // Send POST request to Flask
+            fetch("/predict", {  // Flask's /predict route
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ comment: comment }), // Send the comment in JSON format
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Failed to classify the comment.");
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    // Display the classification result
+                    const classificationElement = document.getElementById("classification");
+
+                    classificationElement.innerText = `${data["Classification"]}`;
+
+                    // Change color based on classification
+                    if (data["Classification"] === "Cyberbullying") {
+                        classificationElement.className = "result red";
+                    } else {
+                        classificationElement.className = "result green";
+                    }
+
+                    // Show the result container
+                    document.getElementById("result-container").style.display = "block";
+                })
+                .catch((error) => {
+                    // Handle errors
+                    console.error("Error:", error);
+                    document.getElementById("error-message").innerText = "An error occurred while classifying the comment. Please try again.";
+                });
+        });
+    </script>
+</body>
+</html>
